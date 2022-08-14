@@ -1,0 +1,22 @@
+name: euphemism
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - cudatoolkit=11.6.0=hecad31d_10
+  - jedi=0.18.1=pyhd8ed1ab_2
+  - numpy-base=1.23.1=py310hcba007f_0
+  - pip=22.2.2=pyhd8ed1ab_0
+  - python=3.10.5=ha86cf86_0_cpython
+  - pytorch=1.12.1=py3.10_cuda11.6_cudnn8.3.2_0
+  - pytorch-lightning=0.8.5=py_0
+  - pip:
+    - hydra-core==1.2.0
+    - ipdb==0.13.9
+    - ipython==8.4.0
+    - numpy==1.23.1
+    - omegaconf==2.2.2
+    - torch==1.12.1
+    - torchaudio==0.12.1
+    - torchvision==0.13.1
