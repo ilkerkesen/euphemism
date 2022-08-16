@@ -4,6 +4,10 @@ import os.path as osp
 import pytorch_lightning as pl
 
 
+def preprocess_path(path):
+    return osp.abspath(osp.expanduser(path))
+
+
 def create_callbacks(config, log_dir):
     checkpoints_path = osp.join(log_dir, 'checkpoints')
     config['checkpoint']['dirpath'] = checkpoints_path
@@ -43,3 +47,13 @@ def process_config(config):
     data_config['tokenizer'] = text_encoder
     config['data'] = data_config
     return config
+
+
+def write_results(file_path, predictions):
+    file_path = preprocess_path(file_path)
+    with open(file_path, 'w') as f:
+        for x in predictions:
+            indexes, labels = x['indexes'], x['predictions']
+            for i in range(len(indexes)):
+                index, label = int(indexes[i]), int(labels[i])
+                f.write(f'{index},{label}\n')

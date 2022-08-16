@@ -1,0 +1,28 @@
+seed: 12345
+ckpt_path: null
+output: null
+
+trainer:
+  gpus: 1
+  max_epochs: 10
+  precision: 16
+  gradient_clip_val: 1.0
+  val_check_interval: 1.0
+  resume_from_checkpoint: null
+  accumulate_grad_batches: 1
+  num_sanity_val_steps: -1
+
+# data module
+data:
+  batch_size: 16
+  num_workers: 5
+  seed: 42
+
+# hydra-specific
+hydra:
+  run:
+    dir: .
+
+defaults:
+  - _self_
+  - override hydra/job_logging: disabled
