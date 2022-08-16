@@ -33,6 +33,7 @@ class EuphemismDataModule(pl.LightningDataModule):
         self,
         root=DATA_ROOT,
         text_input='sentence',
+        use_definitions=False,
         batch_size=64,
         num_workers=0,
         tokenizer='microsoft/deberta-base',
@@ -43,6 +44,7 @@ class EuphemismDataModule(pl.LightningDataModule):
         assert text_input in ('utterance', 'sentence', 'raw_sentence')
         self.root = osp.abspath(osp.expanduser(root))
         self.text_input = text_input
+        self.use_definitions = use_definitions
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
@@ -113,6 +115,13 @@ class EuphemismDataModule(pl.LightningDataModule):
             self.prepare_split('test', test_file)
 
     def setup(self, stage='fit'):
+        # load terms
+        with open(osp.join(self.root, 'terms.tsv'), 'r') as f:
+            lines = [line.strip().split('\t') for line in f.readlines()][1:]
+            self.terms = dict()
+            for (term, definition) in lines:
+                self.terms[term] = definition
+
         percent = self.val_percent
         with open(osp.join(self.root, 'train.json'), 'r') as f:
             labeled = json.load(f)
@@ -141,6 +150,8 @@ class EuphemismDataModule(pl.LightningDataModule):
                 split=split,
                 tokenizer=self.tokenizer,
                 text_input=self.text_input,
+                use_definitions=self.use_definitions,
+                terms=self.terms,
             ),
         )
 
@@ -157,13 +168,27 @@ class EuphemismDataModule(pl.LightningDataModule):
         ]
 
 
-def create_collate_fn(split, tokenizer, text_input):
+def create_collate_fn(split, tokenizer, text_input, use_definitions, terms):
     def helper(batch, key):
         return [x[key] for x in batch]
 
+    def get_sentences_with_definitions(batch):
+        sentences = []
+        for item in batch:
+            term = item.get('lemmatized', 'unknown')
+            defn = terms.get(term, 'none')
+            sent = item['sentence']
+            prompt = f'Term: {term}. Definition: {defn}. Sentence: {sent}'
+            sentences.append(prompt)
+        return sentences
+
     def _collate_fn(batch):
         indexes = torch.tensor(helper(batch, 'index'))
-        sentences = helper(batch, 'sentence')
+        if use_definitions:
+            sentences = get_sentences_with_definitions(batch)
+        else:
+            sentences = helper(batch, 'sentence')
+        sentences = [x.replace('@ ', '') for x in sentences]
         inputs = tokenizer(sentences, return_tensors='pt', padding=True)
         labels = None
         if split != 'test':
