@@ -1,14 +1,14 @@
 seed: 12345
 model:
-  name: "DebertaBaseline"
+  name: "TransformerBaseline"
   text_encoder: "microsoft/deberta-base"
 
 trainer:
   gpus: 1
-  max_epochs: 10
+  max_epochs: 30
   precision: 16
   gradient_clip_val: 1.0
-  val_check_interval: 1.0
+  val_check_interval: 0.5
   resume_from_checkpoint: null
   accumulate_grad_batches: 1
   num_sanity_val_steps: -1
@@ -20,6 +20,7 @@ data:
   seed: 42
   text_input: 'raw_sentence'
   use_definitions: false
+  val_percent: 0.2
 
 # logger (tensorboard)
 logger:

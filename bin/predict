@@ -1,0 +1,49 @@
+#!/usr/bin/env python
+
+import os
+import os.path as osp
+
+import pytorch_lightning as pl
+import hydra
+from omegaconf import OmegaConf
+
+from euphemism.data import EuphemismDataModule as DataModule
+from euphemism.experiment import Experiment
+from euphemism.util import process_config, preprocess_path, write_results
+
+
+CONFIG_DIR = osp.abspath(osp.join(__file__, "../..", "config"))
+
+
+@hydra.main(version_base=None, config_path=CONFIG_DIR, config_name="predict")
+def main(config):
+    config = OmegaConf.to_container(config)
+    config = pl.utilities.parsing.AttributeDict(config)
+    config['ckpt_path'] = preprocess_path(config['ckpt_path'])
+    assert osp.isfile(config['ckpt_path'])
+    assert config['output'] is not None
+    config['output'] = preprocess_path(config['output'])
+    pl.seed_everything(config["seed"])
+    print(config)
+
+    experiment = Experiment.load_from_checkpoint(config['ckpt_path'])
+    config['model'] = experiment.config['model']
+    data_config = experiment.config['data']
+    config['data']['tokenizer'] = config['model']['text_encoder']
+    config['data']['text_input'] = data_config['text_input']
+    config['data']['use_definitions'] = data_config['use_definitions']
+    dm = DataModule(**config['data'])
+    trainer = pl.Trainer(
+        logger=None,
+        callbacks=None,
+        **config["trainer"])
+    
+    trainval, test = trainer.predict(experiment, datamodule=dm)
+    output_dir = preprocess_path(osp.abspath(config['output']))
+    os.makedirs(output_dir, exist_ok=True)
+    write_results(osp.join(output_dir, 'answer.txt'), test)
+    write_results(osp.join(output_dir, 'trainval.txt'), trainval)
+
+
+if __name__ == "__main__":
+    main()

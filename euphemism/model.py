@@ -1,13 +1,14 @@
+from ast import AugStore
 import torch
 import torch.nn as nn
-from transformers import DebertaForSequenceClassification
+from transformers import AutoModelForSequenceClassification
 
 
-class DebertaBaseline(nn.Module):
+class TransformerBaseline(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.config = config
-        self.transformer = DebertaForSequenceClassification.from_pretrained(
+        self.transformer = AutoModelForSequenceClassification.from_pretrained(
             config.get('text_encoder'))
 
     def forward(self, inputs, labels=None):

@@ -4,14 +4,14 @@ from torch import optim
 import pytorch_lightning as pl
 from torchmetrics.functional import f1_score
 
-from .model import DebertaBaseline
+from .model import TransformerBaseline
 
 
 class Experiment(pl.LightningModule):
     def __init__(self, config):
         super().__init__()
         self.config = config
-        self.model = DebertaBaseline(config.get('model', {}))
+        self.model = TransformerBaseline(config.get('model', {}))
         self.save_hyperparameters(config)
 
     def forward(self, inputs, labels=None):
