@@ -13,32 +13,36 @@ class Experiment(pl.LightningModule):
         self.config = config
         self.model = TransformerBaseline(config.get('model', {}))
         self.save_hyperparameters(config)
+        self.hparams.learning_rate = 2e-5
 
-    def forward(self, inputs, labels=None):
-        return self.model(inputs=inputs, labels=labels)
+    def forward(self, batch):
+        return self.model(batch)
 
     def training_step(self, batch, batch_index):
-        output = self(inputs=batch['inputs'], labels=batch['labels'])
+        output = self(batch)
         return {
             "loss": output.loss,
         }
 
     @torch.no_grad()
     def validation_step(self, batch, batch_index):
-        output = self(inputs=batch['inputs'])
+        labels = batch.pop('labels')
+        output = self(batch)
         return {
-            'gold': batch['labels'],
+            'gold': labels,
             'pred': output.logits.argmax(dim=1),
         }
 
     @torch.no_grad()
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
-        output = self(inputs=batch['inputs'])
+        output = self(batch)
         pred = output.logits.argmax(dim=1).tolist()
         indexes = batch['indexes'].tolist()
         return {
             'predictions': pred,
             'indexes': indexes,
+            'prompts': batch['prompts'],
+            'terms': batch['terms'],
         }
     
     def validation_epoch_end(self, outputs):
@@ -47,4 +51,4 @@ class Experiment(pl.LightningModule):
         self.log('f1', f1_score(pred, gold), prog_bar=True)
 
     def configure_optimizers(self):
-        return optim.AdamW(self.model.parameters(), lr=5e-5)
+        return optim.AdamW(self.model.parameters(), lr=self.config['lr'])

@@ -11,5 +11,5 @@ class TransformerBaseline(nn.Module):
         self.transformer = AutoModelForSequenceClassification.from_pretrained(
             config.get('text_encoder'))
 
-    def forward(self, inputs, labels=None):
-        return self.transformer(**inputs, labels=labels)
+    def forward(self, batch):
+        return self.transformer(**batch['inputs'], labels=batch.get('labels'))
