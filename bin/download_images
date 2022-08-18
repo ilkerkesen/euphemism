@@ -1,0 +1,52 @@
+#!/usr/bin/env python
+
+import os
+import os.path as osp
+import json
+import click
+
+from icrawler.builtin import GoogleImageCrawler
+from euphemism.util import preprocess_path
+
+
+ROOT = osp.abspath(osp.join(osp.dirname(osp.abspath(__file__)), '..'))
+DATA_ROOT = osp.join(ROOT, 'data')
+
+
+@click.command()
+@click.option(
+    '--terms-file',
+    type=click.Path(exists=True, file_okay=True),
+    default=osp.join(DATA_ROOT, 'terms.tsv'),
+)
+@click.option(
+    '--save-dir',
+    type=click.Path(exists=False, dir_okay=True, writable=True),
+    default=osp.join(DATA_ROOT, 'images'),
+)
+@click.option(
+    '--num-images',
+    type=int,
+    default=16,
+)
+def main(terms_file, save_dir, num_images):
+    terms_file = preprocess_path(terms_file)
+    save_dir = preprocess_path(save_dir)
+    os.makedirs(save_dir)
+
+    terms = dict()
+    with open(terms_file, 'r') as f:
+        lines = [l.strip().split('\t') for l in f.readlines()]
+        for term, defn in lines:
+            terms[term] = defn
+
+    for term, defn in terms.items():
+        subdir = osp.join(save_dir, term.replace(' ', '_'))
+        if defn == 'death, dying':
+            defn = f'{defn}, funeral'
+        crawler = GoogleImageCrawler(storage={'root_dir': subdir})
+        crawler.crawl(keyword=defn, max_num=num_images)
+
+
+if __name__ == "__main__":
+    main()

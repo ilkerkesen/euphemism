@@ -130,3 +130,4 @@ dmypy.json
 
 .hydra
 data/terms*.tsv
+data/images
