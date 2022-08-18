@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 
 .hydra
-data/terms.tsv
+data/terms*.tsv

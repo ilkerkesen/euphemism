@@ -10,7 +10,7 @@ trainer:
   val_check_interval: 1.0
   resume_from_checkpoint: null
   accumulate_grad_batches: 1
-  num_sanity_val_steps: -1
+  num_sanity_val_steps: 0
 
 # data module
 data:

@@ -170,7 +170,7 @@ class EuphemismDataModule(pl.LightningDataModule):
 
 def create_collate_fn(split, tokenizer, text_input, use_definitions, terms):
     def helper(batch, key):
-        return [x[key] for x in batch]
+        return [x.get(key) for x in batch]
 
     def get_sentences_with_definitions(batch):
         sentences = []
