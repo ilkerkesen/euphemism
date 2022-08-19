@@ -13,7 +13,6 @@ class Experiment(pl.LightningModule):
         self.config = config
         self.model = TransformerBaseline(config.get('model', {}))
         self.save_hyperparameters(config)
-        self.hparams.learning_rate = 2e-5
 
     def forward(self, batch):
         return self.model(batch)
@@ -36,13 +35,12 @@ class Experiment(pl.LightningModule):
     @torch.no_grad()
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         output = self(batch)
-        pred = output.logits.argmax(dim=1).tolist()
+        prob = output.logits.softmax(dim=1)
+        prob = prob[:, 1].tolist()
         indexes = batch['indexes'].tolist()
         return {
-            'predictions': pred,
+            'predictions': prob,
             'indexes': indexes,
-            'prompts': batch['prompts'],
-            'terms': batch['terms'],
         }
     
     def validation_epoch_end(self, outputs):
