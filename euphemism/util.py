@@ -53,7 +53,7 @@ def write_results(file_path, predictions):
     file_path = preprocess_path(file_path)
     with open(file_path, 'w') as f:
         for x in predictions:
-            indexes, labels = x['indexes'], x['predictions']
+            indexes, probs = x['indexes'], x['predictions']
             for i in range(len(indexes)):
-                index, label = int(indexes[i]), int(labels[i])
-                f.write(f'{index},{label}\n')
+                index, prob = int(indexes[i]), float(probs[i])
+                f.write(f'{index},{prob:0.4f}\n')
