@@ -34,6 +34,7 @@ class EuphemismDataModule(pl.LightningDataModule):
         root=DATA_ROOT,
         text_input='sentence',
         use_definitions=False,
+        use_images=False,
         batch_size=64,
         num_workers=0,
         tokenizer='microsoft/deberta-base',
@@ -45,6 +46,7 @@ class EuphemismDataModule(pl.LightningDataModule):
         self.root = osp.abspath(osp.expanduser(root))
         self.text_input = text_input
         self.use_definitions = use_definitions
+        self.use_images = use_images
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
@@ -139,6 +141,17 @@ class EuphemismDataModule(pl.LightningDataModule):
         self.val_data = EuphemismDataset(val_data, 'val')
         with open(osp.join(self.root, 'test.json'), 'r') as f:
             self.test_data = EuphemismDataset(json.load(f), 'test')
+        
+        if not self.use_images:
+            return
+
+        self.image_features = dict()
+        feature_dir = osp.join(self.root, 'features')
+        file_names = os.listdir(feature_dir)
+        for file_name in file_names:
+            file_path = osp.join(feature_dir, file_name)
+            term = osp.splitext(file_name)[0].replace('_', ' ')
+            self.image_features[term] = torch.load(file_path)
 
     def _dataloader(self, dataset, split, shuffle=False):
         return DataLoader(
@@ -152,6 +165,8 @@ class EuphemismDataModule(pl.LightningDataModule):
                 text_input=self.text_input,
                 use_definitions=self.use_definitions,
                 terms=self.terms,
+                use_images=self.use_images,
+                image_features=self.image_features,
             ),
         )
 
@@ -168,7 +183,15 @@ class EuphemismDataModule(pl.LightningDataModule):
         ]
 
 
-def create_collate_fn(split, tokenizer, text_input, use_definitions, terms):
+def create_collate_fn(
+    split,
+    tokenizer,
+    text_input,
+    use_definitions,
+    terms,
+    use_images,
+    image_features,
+):
     def helper(batch, key):
         return [x.get(key) for x in batch]
 
@@ -182,6 +205,13 @@ def create_collate_fn(split, tokenizer, text_input, use_definitions, terms):
             sentences.append(prompt)
         return sentences
 
+    def get_image_features(batch):
+        features = []
+        for item in batch:
+            term = item.get('lemmatized')
+            features.append(image_features.get(term))
+        return torch.cat(features, dim=0)
+
     def _collate_fn(batch):
         indexes = torch.tensor(helper(batch, 'index'))
         if use_definitions:
@@ -190,6 +220,11 @@ def create_collate_fn(split, tokenizer, text_input, use_definitions, terms):
             sentences = helper(batch, 'sentence')
         sentences = [x.replace('@ ', '') for x in sentences]
         inputs = tokenizer(sentences, return_tensors='pt', padding=True)
+
+        features = None
+        if use_images:
+            features = get_image_features(batch)
+
         labels = None
         if split != 'test':
             labels = torch.tensor(helper(batch, 'label')).long()
@@ -198,6 +233,7 @@ def create_collate_fn(split, tokenizer, text_input, use_definitions, terms):
             'indexes': indexes,
             'inputs': inputs,
             'labels': labels,
+            'image_features': features,
         }
     return _collate_fn
 
