@@ -131,5 +131,6 @@ dmypy.json
 .hydra
 data/terms*.tsv
 data/images
+data/dalle
 data/features
 pretrained/
