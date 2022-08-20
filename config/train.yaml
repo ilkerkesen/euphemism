@@ -1,8 +1,5 @@
 seed: 12345
 lr: 5.0e-6
-model:
-  name: "TransformerBaseline"
-  text_encoder: "microsoft/deberta-v3-base"
 
 trainer:
   gpus: 1
@@ -48,4 +45,5 @@ hydra:
 
 defaults:
   - _self_
+  - model: TransformerBaseline
   - override hydra/job_logging: disabled

@@ -1,0 +1,2 @@
+name: "TransformerBaseline"
+text_encoder: "microsoft/deberta-v3-base"

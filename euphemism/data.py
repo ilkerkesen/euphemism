@@ -142,10 +142,10 @@ class EuphemismDataModule(pl.LightningDataModule):
         with open(osp.join(self.root, 'test.json'), 'r') as f:
             self.test_data = EuphemismDataset(json.load(f), 'test')
         
+        self.image_features = dict()
         if not self.use_images:
             return
 
-        self.image_features = dict()
         feature_dir = osp.join(self.root, 'features')
         file_names = os.listdir(feature_dir)
         for file_name in file_names:

@@ -132,3 +132,4 @@ dmypy.json
 data/terms*.tsv
 data/images
 data/features
+pretrained/

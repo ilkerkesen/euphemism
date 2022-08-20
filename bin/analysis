@@ -29,7 +29,12 @@ DATA_ROOT = osp.join(ROOT, 'data')
     type=click.Path(exists=True, file_okay=True),
     default=osp.join(DATA_ROOT, 'terms.tsv'),
 )
-def main(data_file, answers_file, terms_file):
+@click.option(
+    '--term',
+    type=str,
+    default='regime change',
+)
+def main(data_file, answers_file, terms_file, term):
     data_file = preprocess_path(data_file)
     answers_file = preprocess_path(answers_file)
     terms_file = preprocess_path(terms_file)
@@ -93,7 +98,7 @@ def main(data_file, answers_file, terms_file):
         print(f'p = {p}, r = {r}, f1 = {F1} \t count: {N} term: {k}. defn = {defn}')
 
 
-    subset = [x for x in data if x['lemmatized'] == 'regime change']
+    subset = [x for x in data if x['lemmatized'] == term]
     fps, fns = [], []
     for x in subset:
         if x['label'] == 0 and x['answer'] == 1:
