@@ -1,8 +1,5 @@
 seed: 12345
 lr: 5.0e-6
-model:
-  name: "TransformerBaseline"
-  text_encoder: "microsoft/deberta-v3-base"
 
 trainer:
   gpus: 1
@@ -21,6 +18,8 @@ data:
   seed: 42
   text_input: 'raw_sentence'
   use_definitions: false
+  use_images: false
+  use_hallucinations: false
   val_percent: 0.2
 
 # logger (tensorboard)
@@ -47,4 +46,5 @@ hydra:
 
 defaults:
   - _self_
+  - model: TransformerBaseline
   - override hydra/job_logging: disabled

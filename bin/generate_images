@@ -1,0 +1,109 @@
+#!/usr/bin/env python
+
+import os
+import os.path as osp
+import json
+from PIL import Image
+import click
+from tqdm import tqdm
+
+import numpy as np
+import torch
+from min_dalle import MinDalle
+from euphemism.util import preprocess_path
+
+
+ROOT = osp.abspath(osp.join(osp.dirname(osp.abspath(__file__)), '..'))
+DATA_ROOT = osp.join(ROOT, 'data')
+
+
+@click.command()
+@click.option(
+    '--save-dir',
+    type=click.Path(dir_okay=True),
+    default=osp.join(DATA_ROOT, 'dalle'),
+)
+@click.option(
+    '--grid-size',
+    type=int,
+    default=3,
+)
+@click.option(
+    '--seed',
+    type=int,
+    default=42,
+)
+@click.option(
+    '--supercondition_factor',
+    type=int,
+    default=16,
+)
+@click.option(
+    '--top-k',
+    type=int,
+    default=256,
+)
+def main(save_dir, grid_size, seed, supercondition_factor, top_k):
+    save_dir = preprocess_path(save_dir)
+
+    terms = dict()
+    with open(osp.join(DATA_ROOT, 'terms.tsv'), 'r') as f:
+        lines = [l.strip().split('\t') for l in f.readlines()]
+        for term, defn in lines:
+            terms[term] = defn
+
+    with open(osp.join(DATA_ROOT, 'train.json'), 'r') as f:
+        train = json.load(f)
+
+    with open(osp.join(DATA_ROOT, 'test.json'), 'r') as f:
+        test = json.load(f)
+
+    items = [] # cat, key, text
+    # for term in terms.keys():
+    #     items.append(('term', term.replace(' ', '_'), term))
+
+    # for term, defn in terms.items():
+    #     items.append(('defn', term.replace(' ', '_'), defn))
+
+    for x in train:
+        items.append(('train', x['index'], x['sentence'].replace('@ ', '')))
+
+    for x in test:
+        items.append(('test', x['index'], x['sentence'].replace('@ ', '')))
+
+    # os.makedirs(osp.join(save_dir, 'term'), exist_ok=True)
+    # os.makedirs(osp.join(save_dir, 'defn'), exist_ok=True)
+    os.makedirs(osp.join(save_dir, 'train'), exist_ok=True)
+    os.makedirs(osp.join(save_dir, 'test'), exist_ok=True)
+
+    model = MinDalle(
+        models_root=osp.join(ROOT, 'pretrained'),
+        dtype=torch.float16,
+        device='cuda:0',
+        is_mega=True,
+        is_reusable=True,
+    )
+
+    for cat, key, value in tqdm(items, total=len(items)):
+        subdir = osp.join(save_dir, cat, str(key))
+        os.makedirs(subdir, exist_ok=True)
+        images = model.generate_images(
+            text=value,
+            seed=seed,
+            grid_size=grid_size,
+            is_seamless=False,
+            temperature=1,
+            top_k=top_k,
+            supercondition_factor=supercondition_factor,
+            is_verbose=False,
+        )
+
+        images = images.to('cpu').numpy()
+        for i in range(grid_size**2):
+            image = Image.fromarray(images[i].astype(np.uint8))
+            file_path = osp.join(subdir, f'{i:05d}.png')
+            image.save(file_path)
+
+
+if __name__ == "__main__":
+    main()

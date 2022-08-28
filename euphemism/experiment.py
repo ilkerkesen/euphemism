@@ -4,14 +4,20 @@ from torch import optim
 import pytorch_lightning as pl
 from torchmetrics.functional import f1_score
 
-from .model import TransformerBaseline
+from .model import HallucinationBaseline, TransformerBaseline, GroundedBaseline
 
 
 class Experiment(pl.LightningModule):
     def __init__(self, config):
         super().__init__()
         self.config = config
-        self.model = TransformerBaseline(config.get('model', {}))
+        if config['model']['name'] == 'TransformerBaseline':
+            self.model = TransformerBaseline(config.get('model', {}))
+        elif config['model']['name'] == 'GroundedBaseline':
+            self.model = GroundedBaseline(config.get('model', {}))
+        elif config['model']['name'] == 'HallucinationBaseline':
+            print('surprise!!!')
+            self.model = HallucinationBaseline(config.get('model', {}))
         self.save_hyperparameters(config)
 
     def forward(self, batch):
@@ -49,4 +55,5 @@ class Experiment(pl.LightningModule):
         self.log('f1', f1_score(pred, gold), prog_bar=True)
 
     def configure_optimizers(self):
-        return optim.AdamW(self.model.parameters(), lr=self.config['lr'])
+        params = filter(lambda p: p.requires_grad, self.model.parameters())
+        return optim.AdamW(params, lr=self.config['lr'])

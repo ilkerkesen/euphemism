@@ -35,9 +35,14 @@ def make_predictions(probs, T=0.5):
     '--output', '-o',
     type=click.Path(file_okay=True),
 )
-def main(input, output):
+@click.option(
+    '--threshold', '-t',
+    type=float,
+    default=0.5,
+)
+def main(input, output, threshold):
     probs = [read_file(file_path) for file_path in input]
-    pred = make_predictions(probs)
+    pred = make_predictions(probs, T=threshold)
     with open(preprocess_path(output), 'w') as f:
         for (index, label) in pred:
             f.write(f'{index},{label}\n')
