@@ -1,0 +1,3 @@
+name: "HallucinationBaseline"
+text_encoder: "microsoft/deberta-v3-base"
+freeze_text_encoder: false

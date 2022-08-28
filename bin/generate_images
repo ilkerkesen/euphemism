@@ -59,11 +59,11 @@ def main(save_dir, grid_size, seed, supercondition_factor, top_k):
         test = json.load(f)
 
     items = [] # cat, key, text
-    for term in terms.keys():
-        items.append(('term', term, term))
+    # for term in terms.keys():
+    #     items.append(('term', term.replace(' ', '_'), term))
 
-    for term, defn in terms.items():
-        items.append(('defn', term, defn))
+    # for term, defn in terms.items():
+    #     items.append(('defn', term.replace(' ', '_'), defn))
 
     for x in train:
         items.append(('train', x['index'], x['sentence'].replace('@ ', '')))
@@ -71,8 +71,8 @@ def main(save_dir, grid_size, seed, supercondition_factor, top_k):
     for x in test:
         items.append(('test', x['index'], x['sentence'].replace('@ ', '')))
 
-    os.makedirs(osp.join(save_dir, 'term'), exist_ok=True)
-    os.makedirs(osp.join(save_dir, 'defn'), exist_ok=True)
+    # os.makedirs(osp.join(save_dir, 'term'), exist_ok=True)
+    # os.makedirs(osp.join(save_dir, 'defn'), exist_ok=True)
     os.makedirs(osp.join(save_dir, 'train'), exist_ok=True)
     os.makedirs(osp.join(save_dir, 'test'), exist_ok=True)
 
@@ -85,7 +85,7 @@ def main(save_dir, grid_size, seed, supercondition_factor, top_k):
     )
 
     for cat, key, value in tqdm(items, total=len(items)):
-        subdir = osp.join(save_dir, cat, key)
+        subdir = osp.join(save_dir, cat, str(key))
         os.makedirs(subdir, exist_ok=True)
         images = model.generate_images(
             text=value,

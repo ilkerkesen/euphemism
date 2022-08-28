@@ -32,17 +32,20 @@ def main(config):
     config['data']['tokenizer'] = config['model']['text_encoder']
     config['data']['text_input'] = data_config['text_input']
     config['data']['use_definitions'] = data_config['use_definitions']
+    config['data']['use_hallucinations'] = data_config['use_hallucinations']
+    config['data']['use_images'] = data_config['use_images']
     dm = DataModule(**config['data'])
     trainer = pl.Trainer(
         logger=None,
         callbacks=None,
         **config["trainer"])
     
-    trainval, test = trainer.predict(experiment, datamodule=dm)
+    # trainval, test = trainer.predict(experiment, datamodule=dm)
+    test = trainer.predict(experiment, datamodule=dm)
     output_dir = preprocess_path(osp.abspath(config['output']))
     os.makedirs(output_dir, exist_ok=True)
     write_results(osp.join(output_dir, 'answer.txt'), test)
-    write_results(osp.join(output_dir, 'trainval.txt'), trainval)
+    # write_results(osp.join(output_dir, 'trainval.txt'), trainval)
 
 
 if __name__ == "__main__":

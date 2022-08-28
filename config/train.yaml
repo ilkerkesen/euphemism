@@ -19,6 +19,7 @@ data:
   text_input: 'raw_sentence'
   use_definitions: false
   use_images: false
+  use_hallucinations: false
   val_percent: 0.2
 
 # logger (tensorboard)
